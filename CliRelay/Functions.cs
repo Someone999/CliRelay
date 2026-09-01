@@ -28,7 +28,7 @@ public static class Functions
     }
     
     [CliFunction("sleep")]
-    public static void Sleep(string[] args, RuntimeConfig config)
+    public static void Sleep(string[] args)
     {
         ExitIf(args.Length == 0, "Usage: @sleep <ms: int>", "Terminating...");
         ExitIf(!int.TryParse(args[0], out var ms), "Usage: @sleep <ms: int>", "Terminating...");
@@ -36,13 +36,13 @@ public static class Functions
     }
     
     [CliFunction("out")]
-    public static void WriteLine(string[] args, RuntimeConfig config)
+    public static void WriteLine(string[] args)
     {
         Console.WriteLine(string.Join(' ', args));
     }
     
     [CliFunction("warn")]
-    public static void WriteWarn(string[] args, RuntimeConfig config)
+    public static void WriteWarn(string[] args)
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine(string.Join(' ', args));
@@ -50,7 +50,7 @@ public static class Functions
     }
     
     [CliFunction("err")]
-    public static void WriteErr(string[] args, RuntimeConfig config)
+    public static void WriteErr(string[] args)
     {
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine(string.Join(' ', args));
@@ -58,7 +58,7 @@ public static class Functions
     }
 
     [CliFunction("exit")]
-    public static void Exit(string[] args, RuntimeConfig config)
+    public static void Exit(string[] args)
     {
         if (args.Length == 0)
         {

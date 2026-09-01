@@ -36,16 +36,26 @@ public class CliFunctionManager
         attribute = attr;
         return true;
 
+        bool IsType<T>(ParameterInfo parameterInfo)
+        {
+            return parameterInfo.ParameterType == typeof(T);
+        }
+        
         bool IsTargetParameters(ParameterInfo[] parameterInfos)
         {
-            if (parameterInfos.Length != 2)
+            if (parameterInfos.Length is 0 or > 2)
             {
                 return false;
             }
             
             var first = parameterInfos[0];
+            if (parameterInfos.Length == 1)
+            {
+                return IsType<string[]>(first);
+            }
+            
             var second = parameterInfos[1];
-            return first.ParameterType == typeof(string[]) && second.ParameterType == typeof(RuntimeConfig);
+            return IsType<string[]>(first) && IsType<RuntimeConfig>(second);
         }
     }
     
