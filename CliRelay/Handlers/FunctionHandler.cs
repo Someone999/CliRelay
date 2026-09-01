@@ -29,19 +29,13 @@ public class FunctionHandler : IHandler
         }
         
         var (pCount, method) =  funcTuple.Value;
-        object?[] passArgs;
-        switch (pCount)
+        object?[] passArgs = pCount switch
         {
-            case 1:
-                passArgs = [args];
-                break;
-            case 2:
-                passArgs = [args, config];
-                break;
-            default:
-                throw new InvalidOperationException("Invalid function parameters count");
-        }
-        
+            1 => [args],
+            2 => [args, config],
+            _ => throw new InvalidOperationException("Invalid function parameters count")
+        };
+
         method.Invoke(config, passArgs);
     }
     
