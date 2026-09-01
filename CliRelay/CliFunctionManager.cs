@@ -7,9 +7,11 @@ using CliRelay.Configs;
 
 namespace CliRelay;
 
+
 public class CliFunctionManager
 {
     private ConcurrentDictionary<string, MethodInfo> _methods = new ConcurrentDictionary<string, MethodInfo>();
+    private ConcurrentDictionary<MethodInfo, int> _paramsCountCache = new ConcurrentDictionary<MethodInfo, int>();
 
     private bool IsTargetCliMethod(MethodInfo methodInfo, [NotNullWhen(true)] out CliFunctionAttribute? attribute)
     {
@@ -88,5 +90,26 @@ public class CliFunctionManager
         }
     }
 
-    public MethodInfo? GetMethod(string name) => _methods.GetValueOrDefault(name);
+    private int GetMethodParamsCount(MethodInfo methodInfo)
+    {
+        if (_paramsCountCache.TryGetValue(methodInfo, out var paramsCount))
+        {
+            return paramsCount;
+        }
+        
+        var parameters =  methodInfo.GetParameters();
+        _paramsCountCache.TryAdd(methodInfo, parameters.Length);
+        return parameters.Length;
+    }
+    public (int, MethodInfo)? GetMethod(string name)
+    {
+        var method = _methods.GetValueOrDefault(name);
+        if (method == null)
+        {
+            return null;
+        }
+        
+        var paramsCount = GetMethodParamsCount(method);
+        return (paramsCount, method);
+    } 
 }
