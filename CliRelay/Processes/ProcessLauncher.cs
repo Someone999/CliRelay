@@ -46,9 +46,11 @@ public static class ProcessLauncher
     {
         var tokens = Lexers.CliArgumentLexer.Tokenize(commandStr).Select(t => t.Text).ToList();
         var cmd = tokens[0];
+        bool createWindow = HasNonNullValue(config, "createWindow", out bool v) && v;
         var processStartInfo = new ProcessStartInfo(cmd)
         {
             UseShellExecute = false,
+            CreateNoWindow = !createWindow,
         };
         
         for (int i = 1; i < tokens.Count; i++)
