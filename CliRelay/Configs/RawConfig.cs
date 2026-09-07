@@ -21,8 +21,8 @@ public class RawConfig
     [JsonPropertyName("argMap")]
     public Dictionary<string, string?> Map { get; init; } = new Dictionary<string, string?>();
 
-    [JsonPropertyName("commands")]
-    public List<string> Commands { get; init; } = new List<string>();
+    [JsonPropertyName("items")]
+    public List<HandlerItem> Items { get; init; } = new List<HandlerItem>();
     
     [JsonPropertyName("import")]
     public List<ImportItem> ImportItems { get; init; } = new List<ImportItem>();

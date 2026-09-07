@@ -172,7 +172,7 @@ public static class ConfigLoader
         Merge(runtimeConfig.Environment, renderedEnv);
         Merge(runtimeConfig.Consts, renderedConsts);
         
-        runtimeConfig.Commands.AddRange(rawConfig.Commands);
+        runtimeConfig.Items.AddRange(rawConfig.Items);
         
         return runtimeConfig;
     }
