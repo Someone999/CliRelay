@@ -1,6 +1,3 @@
 namespace CliRelay.Attributes;
 
-public class CliFunctionAttribute(string name) : Attribute
-{
-    public string Name => name;
-}
+public class CliFunctionAttribute(string name) : RouteAttribute(name);

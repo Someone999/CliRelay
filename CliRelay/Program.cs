@@ -31,7 +31,7 @@ class Program
         var r = rootCommand.Parse(args);
         var configFile = r.GetRequiredValue<string>("configFile");
         var content = File.ReadAllText(configFile);
-        var node = JsonNode.Parse(content);
+        var node = JsonSerializer.Deserialize<JsonNode>(content);
         if (node is not JsonObject jsonObject)
         {
             Console.WriteLine("Invalid json file");
@@ -59,22 +59,21 @@ class Program
             ["vars"] = runtimeConfig.CustomVariables.AsReadOnly()
         });
         
-        foreach (var command in runtimeConfig.Commands)
+        CliHandlerManager handlerManager = new();
+        CliFunctionManager functionManager = new();
+        functionManager.ScanCommands();
+        handlerManager.ScanHandlers();
+        handlerManager.RegisterHandler("command", new CommandCliHandler(templateContext));
+        foreach (var handlerItem in runtimeConfig.Items)
         {
-            var renderedCommand = Template.Parse(command).Render(templateContext);
-            if (string.IsNullOrEmpty(renderedCommand))
+            var context = new CliHandlerContext(runtimeConfig, handlerItem.Data);
+            var handler = handlerManager.GetCliHandler(handlerItem.Type);
+            if (handler == null)
             {
-                continue;
+                throw new KeyNotFoundException("Specified handler not found.");
             }
             
-            if (command.StartsWith('@'))
-            {
-                FunctionHandler.Instance.Handle(renderedCommand, runtimeConfig);
-            }
-            else
-            {
-                ProcessLaunchHandler.Instance.Handle(renderedCommand, runtimeConfig);
-            }
+            handler.Handle(context);
         }
     }
 }

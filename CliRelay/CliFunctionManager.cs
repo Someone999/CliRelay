@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 using CliRelay.Attributes;
 using CliRelay.Configs;
+using CliRelay.Reflections;
 
 namespace CliRelay;
 
@@ -60,7 +61,6 @@ public class CliFunctionManager
             return IsType<string[]>(first) && IsType<RuntimeConfig>(second);
         }
     }
-    
     private void ScanCommandsForType(Type type)
     {
         var methods =  type.GetMethods();
@@ -101,6 +101,7 @@ public class CliFunctionManager
         _paramsCountCache.TryAdd(methodInfo, parameters.Length);
         return parameters.Length;
     }
+    
     public (int, MethodInfo)? GetMethod(string name)
     {
         var method = _methods.GetValueOrDefault(name);

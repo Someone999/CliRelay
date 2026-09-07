@@ -5,20 +5,26 @@ using HsManLexer.Rules;
 
 namespace CliRelay.Handlers;
 
-public class FunctionHandler : IHandler
+public class FunctionCliHandler : ICliHandler
 {
     private CliFunctionManager _functionManager;
     private static readonly ILexer Lexer = Lexers.ArgumentLexer;
     
 
-    private FunctionHandler()
+    private FunctionCliHandler()
     {
         _functionManager = new CliFunctionManager();
         _functionManager.ScanCommands();
     }
     
-    public void Handle(string command, RuntimeConfig config)
+    public void Handle(CliHandlerContext context)
     {
+        var command = context.CustomData["command"] as string;
+        if (string.IsNullOrEmpty(command))
+        {
+            return;
+        }
+        
         var tokens = Lexer.Tokenize(command).ToList();
         var funcName =  tokens[0].Text;
         var args = tokens.GetRange(1, tokens.Count - 1).Select(t => t.Text).ToArray();
@@ -32,12 +38,12 @@ public class FunctionHandler : IHandler
         object?[] passArgs = pCount switch
         {
             1 => [args],
-            2 => [args, config],
+            2 => [args, context.RuntimeConfig],
             _ => throw new InvalidOperationException("Invalid function parameters count")
         };
 
-        method.Invoke(config, passArgs);
+        method.Invoke(null, passArgs);
     }
     
-    public static IHandler Instance { get; } = new FunctionHandler();
+    public static ICliHandler Instance { get; } = new FunctionCliHandler();
 }
