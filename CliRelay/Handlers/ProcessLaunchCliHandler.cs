@@ -1,5 +1,7 @@
 using CliRelay.Configs;
 using CliRelay.Processes;
+using Serilog;
+using Serilog.Core;
 
 namespace CliRelay.Handlers;
 
@@ -16,7 +18,9 @@ public class ProcessLaunchCliHandler : ICliHandler
             return;
         }
         
-        ProcessLauncher.LaunchProcess(command, context.RuntimeConfig.Config);
+        Log.Logger.Verbose("[ProcessLaunchCliHandler] Start: {0}", command);
+        ProcessLauncher.LaunchProcess(command, context);
+        Log.Logger.Verbose("[ProcessLaunchCliHandler] End");
     }
     
     public static ICliHandler Instance { get; } = new ProcessLaunchCliHandler();

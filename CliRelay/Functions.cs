@@ -1,5 +1,6 @@
 using CliRelay.Attributes;
 using CliRelay.Configs;
+using Serilog;
 
 namespace CliRelay;
 
@@ -60,8 +61,10 @@ public static class Functions
     [CliFunction("exit")]
     public static void Exit(string[] args)
     {
+        Log.Logger.Verbose("[FunctionCliHandler] Exiting...");
         if (args.Length == 0)
         {
+            Log.Logger.Verbose("Calling Environment.Exit(0)...");
             Environment.Exit(0);
         }
         
@@ -70,6 +73,7 @@ public static class Functions
             ExitIf(true, "Usage: @exit <code>", "Terminating...");
         }
        
+        Log.Logger.Verbose("Calling Environment.Exit({0})...", exitCode);
         Environment.Exit(exitCode);
     }
 

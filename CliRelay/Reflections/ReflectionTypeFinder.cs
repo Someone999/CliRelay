@@ -2,11 +2,6 @@ using System.Reflection;
 
 namespace CliRelay.Reflections;
 
-public interface ITypeFilter<in T> where T: MemberInfo
-{
-    bool IsTargetMember(Type type, T obj, Dictionary<string, object?> data);
-}
-
 public class ReflectionTypeFinder<T>(IEnumerable<ITypeFilter<T>> filters) where T: MemberInfo
 {
     public List<Assembly> ReflectionAssemblies { get; } = new List<Assembly>();

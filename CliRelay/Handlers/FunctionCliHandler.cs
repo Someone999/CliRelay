@@ -2,6 +2,7 @@ using CliRelay.Configs;
 using CliRelay.LexerRules;
 using HsManLexer.Lexers;
 using HsManLexer.Rules;
+using Serilog;
 
 namespace CliRelay.Handlers;
 
@@ -19,13 +20,15 @@ public class FunctionCliHandler : ICliHandler
     
     public void Handle(CliHandlerContext context)
     {
+        
         var command = context.CustomData["command"] as string;
         if (string.IsNullOrEmpty(command))
         {
             return;
         }
-        
+        Log.Logger.Verbose("[FunctionCliHandler] Start: {0}", command);
         var tokens = Lexer.Tokenize(command).ToList();
+        Log.Logger.Verbose("[FunctionCliHandler] Tokenized");
         var funcName =  tokens[0].Text;
         var args = tokens.GetRange(1, tokens.Count - 1).Select(t => t.Text).ToArray();
         var funcTuple = _functionManager.GetMethod(funcName);
@@ -41,8 +44,10 @@ public class FunctionCliHandler : ICliHandler
             2 => [args, context.RuntimeConfig],
             _ => throw new InvalidOperationException("Invalid function parameters count")
         };
-
+        
+        Log.Logger.Verbose("[FunctionCliHandler] About to run");
         method.Invoke(null, passArgs);
+        Log.Logger.Verbose("[FunctionCliHandler] End");
     }
     
     public static ICliHandler Instance { get; } = new FunctionCliHandler();

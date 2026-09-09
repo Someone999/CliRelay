@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
+using CliRelay.Handlers;
+using Serilog;
 
 namespace CliRelay.Processes;
 
@@ -41,9 +43,12 @@ public static class ProcessLauncher
             return false;
         }
     }
+
     
-    public static void LaunchProcess(string commandStr, Dictionary<string, object?> config)
+    
+    public static void LaunchProcess(string commandStr, CliHandlerContext handlerContext)
     {
+        var config = handlerContext.RuntimeConfig.Config;
         var tokens = Lexers.CliArgumentLexer.Tokenize(commandStr).Select(t => t.Text).ToList();
         var cmd = tokens[0];
         bool createWindow = true;
@@ -74,31 +79,71 @@ public static class ProcessLauncher
             encoding = Encoding.GetEncoding(encodingName);
         }
         
+        if (HasNonNullValue<RedirectionInfo>(config, "redirect", out var redirect))
+        {
+            if (redirect.RedirectStandardInput)
+            {
+                processStartInfo.RedirectStandardInput = true;
+                processStartInfo.StandardInputEncoding = encoding;
+            }
+            
+            if (redirect.RedirectStandardOutput)
+            {
+                processStartInfo.RedirectStandardOutput = true;
+                processStartInfo.StandardOutputEncoding = encoding;
+            }
+            
+            if (redirect.RedirectStandardError)
+            {
+                processStartInfo.RedirectStandardError = true;
+                processStartInfo.StandardErrorEncoding = encoding;
+            }
+        }
+        else
+        {
+            Console.InputEncoding = encoding;
+            Console.OutputEncoding = encoding;
+        }
+        
         var process = Process.Start(processStartInfo);
         if (process == null)
         {
-            Console.WriteLine("Failed to launch process.");
+            Log.Logger.Error("Failed to launch process.");
             return;
         }
-        
-        Console.InputEncoding = encoding;
-        Console.OutputEncoding = encoding;
-        
+
+        Log.Logger.Verbose("[ProcessLaunchCliHandler] Process ok");
         process.EnableRaisingEvents = true;
         process.Exited += (sender, args) =>
         {
+            Log.Logger.Verbose("[ProcessLaunchCliHandler] Exited code: {0}]", process.ExitCode);
             if (process.ExitCode == 0)
             {
+                if (GlobalConfig.Verbose)
+                {
+                    Console.ReadKey(false);
+                }
+                
                 return;
             }
             
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Process failed with exit code: " + process.ExitCode);
+            Log.Logger.Error("Process failed with exit code: {0}", process.ExitCode);
+            Global.ActiveProcess.Clear();
         };
 
-        if (HasNonNullValue<bool>(config, "waitForExit", out var waitForExit) && waitForExit)
+        var lastProcess = Global.ActiveProcess;
+        if (lastProcess.HasValue)
         {
-            process.WaitForExit();
+            Global.HistoryProcesses.Add(lastProcess.Value);
         }
+        
+        Global.ActiveProcess.SetValue(new ProcessWrapper(process));
+        if (!HasNonNullValue<bool>(config, "waitForExit", out var waitForExit) || !waitForExit)
+        {
+            return;
+        }
+        
+        Log.Logger.Verbose("[ProcessLaunchCliHandler] Waiting for exit...]");
+        process.WaitForExit();
     }
 }
