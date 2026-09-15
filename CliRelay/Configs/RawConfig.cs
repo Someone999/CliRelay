@@ -7,7 +7,7 @@ namespace CliRelay.Configs;
 public class RawConfig
 {
     [JsonPropertyName("global")]
-    public RawConfig? GlobalConfig { get; private set; }
+    public RawConfig? GlobalConfig { get; internal set; }
     
     [JsonPropertyName("env")]
     public Dictionary<string, string?> Environment { get; init; } = new Dictionary<string, string?>();
@@ -27,16 +27,4 @@ public class RawConfig
     [JsonPropertyName("import")]
     public List<ImportItem> ImportItems { get; init; } = new List<ImportItem>();
     
-    public static RawConfig? FromJsonObject(JsonObject root, string itemName)
-    {
-        var item = root[itemName]?.AsObject();
-        var configModel = item?.Deserialize<RawConfig>();
-        if (configModel == null || item == null)
-        {
-            return null;
-        }
-        
-        configModel.GlobalConfig = root["global"]?.AsObject().Deserialize<RawConfig>();
-        return configModel;
-    }
 }

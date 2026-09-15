@@ -4,7 +4,9 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using CliRelay.Configs;
+using CliRelay.Configs.Resolvers;
 using CliRelay.Handlers;
+using Jint;
 using Scriban;
 using Scriban.Runtime;
 using Serilog;
@@ -51,30 +53,24 @@ class Program
         Log.Logger.Verbose("[Main] Loading config for {0}...", configFile);
         var content = File.ReadAllText(configFile);
         Log.Logger.Verbose("[Main] File loaded");
-        var node = JsonSerializer.Deserialize<JsonNode>(content);
         Log.Logger.Verbose("[Main] Config file loaded");
-        if (node is not JsonObject jsonObject)
-        {
-            Console.WriteLine("Invalid json file");
-            return;
-        }
-        
+        JsonRawConfigResolver resolver = new JsonRawConfigResolver();
+        var cfg = resolver.Resolve(content);
         Log.Logger.Verbose("[Main] Config ok");
-
         var itemName = parseResult.GetRequiredValue<string>("itemName");
-        var rawConfig = RawConfig.FromJsonObject(jsonObject, itemName);
-        if (rawConfig is null)
-        {
-            Console.WriteLine("Failed to parse config.");
-            return;
-        }
-        
         Log.Logger.Verbose("[Main] Config item ok");
-        
         var progArgs = parseResult.GetValue<string[]>("arguments") ?? [];
         var innerArgs = ProgramCommandArguments.Parse(progArgs);
         Log.Logger.Verbose("[Main] Passthrough arguments parsed");
-        var runtimeConfig = ConfigLoader.ResolveConfig(rawConfig, innerArgs);
+        var loader = new RawConfigItemLoader();
+        var generator = new DefaultRuntimeConfigGenerator();
+        var item = loader.LoadConfig((cfg, itemName), innerArgs);
+        if (item == null)
+        {
+            Log.Logger.Error("Failed to  load config item");
+            return;
+        }
+        var runtimeConfig = generator.Generate(item, innerArgs);
         Log.Logger.Verbose("[Main] Config merge ok");
         var templateContext = new TemplateContext();
         templateContext.PushGlobal(new ScriptObject
