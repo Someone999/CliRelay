@@ -1,4 +1,4 @@
-namespace CliRelay.Configs.Resolvers;
+namespace CliRelay.Configs.Resolvers.Loaders;
 
 public class RawConfigItemLoader : IConfigItemLoader<(Dictionary<string, RawConfig>, string), RawConfig>
 {

@@ -2,7 +2,7 @@ namespace CliRelay.Utils;
 
 public static class DictionaryUtils
 {
-    public static void Merge(Dictionary<string, string?> left, Dictionary<string, string?> right, bool overwrite = true)
+    public static void Merge(IDictionary<string, string?> left, IDictionary<string, string?> right, bool overwrite = true)
     {
         if (right.Count == 0)
         {

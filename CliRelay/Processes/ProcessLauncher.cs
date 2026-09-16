@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using CliRelay.Handlers;
+using CliRelay.Utils;
 using Serilog;
 
 namespace CliRelay.Processes;
@@ -105,6 +106,7 @@ public static class ProcessLauncher
             Console.OutputEncoding = encoding;
         }
         
+        DictionaryUtils.Merge(processStartInfo.Environment, handlerContext.RuntimeConfig.Environment); 
         var process = Process.Start(processStartInfo);
         if (process == null)
         {

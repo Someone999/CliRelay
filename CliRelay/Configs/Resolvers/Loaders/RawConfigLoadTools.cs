@@ -1,4 +1,4 @@
-namespace CliRelay.Configs.Resolvers;
+namespace CliRelay.Configs.Resolvers.Loaders;
 
 static class RawConfigLoadTools
 {
@@ -21,7 +21,7 @@ static class RawConfigLoadTools
         }
 
         var jsonObject = Resolver.Resolve(File.ReadAllText(fullPath));
-        var item = jsonObject[importItem.Type];
+        var item = jsonObject[importItem.ItemName];
         return item;
     }
 

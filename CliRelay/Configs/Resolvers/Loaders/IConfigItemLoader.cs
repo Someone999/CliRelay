@@ -1,4 +1,4 @@
-namespace CliRelay.Configs.Resolvers;
+namespace CliRelay.Configs.Resolvers.Loaders;
 
 public interface IConfigItemLoader<in TSource, out TTarget>
 {

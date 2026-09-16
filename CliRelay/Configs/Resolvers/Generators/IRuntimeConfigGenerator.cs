@@ -1,4 +1,4 @@
-namespace CliRelay.Configs.Resolvers;
+namespace CliRelay.Configs.Resolvers.Generators;
 
 public interface IRuntimeConfigGenerator<in T>
 {

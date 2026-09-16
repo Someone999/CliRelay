@@ -5,6 +5,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using CliRelay.Configs;
 using CliRelay.Configs.Resolvers;
+using CliRelay.Configs.Resolvers.Generators;
+using CliRelay.Configs.Resolvers.Loaders;
 using CliRelay.Handlers;
 using Jint;
 using Scriban;

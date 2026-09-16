@@ -1,8 +1,9 @@
+using CliRelay.Configs.Resolvers.Loaders;
 using CliRelay.Utils;
 using Scriban;
 using Scriban.Runtime;
 
-namespace CliRelay.Configs.Resolvers;
+namespace CliRelay.Configs.Resolvers.Generators;
 
 public class DefaultRuntimeConfigGenerator : IRuntimeConfigGenerator<RawConfig>
 {
