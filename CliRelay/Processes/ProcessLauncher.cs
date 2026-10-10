@@ -47,9 +47,9 @@ public static class ProcessLauncher
 
     
     
-    public static void LaunchProcess(string commandStr, CliHandlerContext handlerContext)
+    public static void LaunchProcess(string commandStr, CliHandleContext handleContext)
     {
-        var config = handlerContext.RuntimeConfig.Config;
+        var config = handleContext.RuntimeConfig.Config;
         var tokens = Lexers.CliArgumentLexer.Tokenize(commandStr).Select(t => t.Text).ToList();
         var cmd = tokens[0];
         bool createWindow = true;
@@ -106,7 +106,7 @@ public static class ProcessLauncher
             Console.OutputEncoding = encoding;
         }
         
-        DictionaryUtils.Merge(processStartInfo.Environment, handlerContext.RuntimeConfig.Environment); 
+        DictionaryUtils.Merge(processStartInfo.Environment, handleContext.RuntimeConfig.Environment); 
         var process = Process.Start(processStartInfo);
         if (process == null)
         {

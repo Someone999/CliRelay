@@ -8,15 +8,30 @@ using CliRelay.Configs.Resolvers;
 using CliRelay.Configs.Resolvers.Generators;
 using CliRelay.Configs.Resolvers.Loaders;
 using CliRelay.Handlers;
-using Jint;
 using Scriban;
 using Scriban.Runtime;
 using Serilog;
 
 namespace CliRelay;
+public record ResolvedHandlerItem(ICliHandler Handler, CliHandleContext HandleContext, HandlerItem HandlerItem);
 
 class Program
 {
+    private static IEnumerable<ResolvedHandlerItem> ResolveHandlerItems(RuntimeConfig runtimeConfig, CliHandlerManager handlerManager)
+    {
+        foreach (var handlerItem in runtimeConfig.Items)
+        {
+            var context = new CliHandleContext(runtimeConfig, handlerItem.Data);
+            var handler = handlerManager.GetCliHandler(handlerItem.Type);
+            if (handler == null)
+            {
+                throw new KeyNotFoundException("Specified handler not found.");
+            }
+            
+            yield return new ResolvedHandlerItem(handler, context, handlerItem);
+        }
+    }
+    
     static void Main(string[] args)
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -86,48 +101,64 @@ class Program
         });
         
         
-        var isDryRun = parseResult.GetValue<bool>("dryRun");
-        if (isDryRun)
-        {
-            DryRun(runtimeConfig);
-            return;
-        }
-        
         CliHandlerManager handlerManager = new();
         CliFunctionManager functionManager = new();
         functionManager.ScanCommands();
+        Log.Logger.Verbose("[Main] Command scanned");
         handlerManager.ScanHandlers();
         handlerManager.RegisterHandler("command", new CommandCliHandler(templateContext));
-        Log.Logger.Verbose("[Main] Command scanned");
-        foreach (var handlerItem in runtimeConfig.Items)
+        var isDryRun = parseResult.GetValue<bool>("dryRun");
+        if (isDryRun)
         {
-            var context = new CliHandlerContext(runtimeConfig, handlerItem.Data);
-            var handler = handlerManager.GetCliHandler(handlerItem.Type);
-            Log.Logger.Verbose("[Main::ExecutionLoop] Start: Command type: {0}",  handlerItem.Type);
-            if (handler == null)
-            {
-                throw new KeyNotFoundException("Specified handler not found.");
-            }
-            
-            handler.Handle(context);
-            Log.Logger.Verbose("[Main::ExecutionLoop] End");
+            DryRun(runtimeConfig, handlerManager);
+            return;
         }
+
+        foreach (var (handler, context, handlerItem) in ResolveHandlerItems(runtimeConfig, handlerManager))
+        {
+            Log.Logger.Verbose("[Main::ExecLoop] Handler: {0} Start", handlerItem.Type);
+            handler.Handle(context);
+            Log.Logger.Verbose("[Main::ExecLoop] Handler: {0} End", handlerItem.Type);
+        }
+        
+        
+        
     }
 
-    private static void DryRun(RuntimeConfig runtimeConfig)
+    private static void DryRun(RuntimeConfig runtimeConfig, CliHandlerManager handlerManager)
     {
-        Console.WriteLine("----Dry run----");
-        StringBuilder builder = new StringBuilder();
-        
-        foreach (var handlerItem in runtimeConfig.Items)
+        Log.Logger.Information("Dry run");
+
+        var entries = new List<DryRunEntry>();
+
+        foreach (var (handler, context, _) in ResolveHandlerItems(runtimeConfig, handlerManager))
         {
-            builder.AppendLine(handlerItem.Type);
-            builder.AppendLine("    ");
-            builder.AppendLine(handlerItem.Data?.ToString());
+            entries.AddRange(handler.GetDryRunEntries(context));
+        }
+
+        RenderDryRun(entries);
+        Log.Logger.Information("Dry run complete. Press any key to continue...");
+        Console.ReadKey(true);
+    }
+
+    private static void RenderDryRun(List<DryRunEntry> entries)
+    {
+        var sb = new StringBuilder();
+        for (int i = 0; i < entries.Count; i++)
+        {
+            var e = entries[i];
+            sb.Append($"[{i + 1}] [{e.HandlerName}] {e.Verb} -> {e.Content}");
+            if (e.Note != null)
+            {
+                sb.AppendLine($"Note: {e.Note}");
+            }
+            
+            if (i + 1 < entries.Count)
+            {
+                sb.AppendLine();
+            }
         }
         
-        Console.WriteLine(builder);
-        Console.WriteLine("----Dry run complete----");
-        Console.ReadKey(true);
+        Console.WriteLine(sb);
     }
 }

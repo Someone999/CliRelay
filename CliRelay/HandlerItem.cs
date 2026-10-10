@@ -9,5 +9,5 @@ public class HandlerItem
     public string Type { get; init; } = "unknown";
     
     [JsonPropertyName("data")]
-    public JsonNode? Data { get; init; }
+    public JsonObject? Data { get; init; }
 }

@@ -10,7 +10,7 @@ public class ProcessLaunchCliHandler : ICliHandler
     private ProcessLaunchCliHandler()
     {
     }
-    public void Handle(CliHandlerContext context)
+    public void Handle(CliHandleContext context)
     {
         var command = context.CustomData["command"] as string;
         if (string.IsNullOrEmpty(command))
@@ -22,6 +22,11 @@ public class ProcessLaunchCliHandler : ICliHandler
         ProcessLauncher.LaunchProcess(command, context);
         Log.Logger.Verbose("[ProcessLaunchCliHandler] End");
     }
-    
+
+    public IEnumerable<DryRunEntry> GetDryRunEntries(CliHandleContext context)
+    {
+        return [];
+    }
+
     public static ICliHandler Instance { get; } = new ProcessLaunchCliHandler();
 }

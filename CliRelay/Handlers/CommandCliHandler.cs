@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using System.Text.Json.Nodes;
 using CliRelay.Attributes;
 using Scriban;
@@ -7,14 +8,17 @@ namespace CliRelay.Handlers;
 [CliHandler("command")]
 public class CommandCliHandler(TemplateContext templateContext) : ICliHandler
 {
-    public void Handle(CliHandlerContext context)
+    private record Commands(string RenderedCommand, string RawCommand);
+    private IEnumerable<Commands> GetCommands(CliHandleContext context)
     {
-        var commands = context.Payload?.AsArray();
+        var payload = context.Data?.AsObject();
+
+        var commands = payload?["commands"]?.AsArray();
         if (commands == null)
         {
-            return;
+            yield break;
         }
-        
+
         foreach (var command in commands)
         {
             var commandStr = command?.ToString();
@@ -22,7 +26,7 @@ public class CommandCliHandler(TemplateContext templateContext) : ICliHandler
             {
                 continue;
             }
-            
+
             var renderedCommand = Template.Parse(commandStr).Render(templateContext);
             context.CustomData["command"] = renderedCommand;
             context.CustomData["rawCommand"] = commandStr;
@@ -30,8 +34,15 @@ public class CommandCliHandler(TemplateContext templateContext) : ICliHandler
             {
                 continue;
             }
-            
-            if (commandStr.StartsWith('@'))
+
+            yield return new Commands(renderedCommand, commandStr);
+        }
+    }
+    public void Handle(CliHandleContext context)
+    {
+        foreach (var (_, rawCommand) in GetCommands(context))
+        {
+            if (rawCommand.StartsWith('@'))
             {
                 FunctionCliHandler.Instance.Handle(context);
             }
@@ -40,6 +51,20 @@ public class CommandCliHandler(TemplateContext templateContext) : ICliHandler
                 ProcessLaunchCliHandler.Instance.Handle(context);
             }
         }
-        
+    }
+
+    public IEnumerable<DryRunEntry> GetDryRunEntries(CliHandleContext context)
+    {
+        foreach (var (renderedCommand, commandStr) in GetCommands(context))
+        {
+            if (commandStr.StartsWith('@'))
+            {
+                yield return new DryRunEntry("Function", "Call", renderedCommand);
+            }
+            else
+            {
+                yield return new DryRunEntry("Process", "Launch", renderedCommand);
+            }
+        }
     }
 }

@@ -18,7 +18,7 @@ public class FunctionCliHandler : ICliHandler
         _functionManager.ScanCommands();
     }
     
-    public void Handle(CliHandlerContext context)
+    public void Handle(CliHandleContext context)
     {
         
         var command = context.CustomData["command"] as string;
@@ -49,6 +49,11 @@ public class FunctionCliHandler : ICliHandler
         method.Invoke(null, passArgs);
         Log.Logger.Verbose("[FunctionCliHandler] End");
     }
-    
+
+    public IEnumerable<DryRunEntry> GetDryRunEntries(CliHandleContext context)
+    {
+        return [];
+    }
+
     public static ICliHandler Instance { get; } = new FunctionCliHandler();
 }

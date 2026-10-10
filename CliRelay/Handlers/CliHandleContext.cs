@@ -3,9 +3,9 @@ using CliRelay.Configs;
 
 namespace CliRelay.Handlers;
 
-public class CliHandlerContext(RuntimeConfig runtimeRuntimeConfig, JsonNode? payload)
+public class CliHandleContext(RuntimeConfig runtimeRuntimeConfig, JsonObject? data)
 {
     public RuntimeConfig RuntimeConfig { get; } = runtimeRuntimeConfig;
     public Dictionary<string, object> CustomData { get; } = new();
-    public JsonNode? Payload { get; } = payload;
+    public JsonObject? Data { get; } = data;
 }
