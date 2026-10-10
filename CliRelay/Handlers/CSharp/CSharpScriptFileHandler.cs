@@ -60,7 +60,7 @@ public class CSharpScriptFileHandler : ICliHandler
         }
     }
 
-    private ResolvedType? GetBestMatchType(CliHandleContext context)
+    private static ResolvedType? GetBestMatchType(CliHandleContext context)
     {
         var asm = BuildAssembly(context);
         if (asm is null)
