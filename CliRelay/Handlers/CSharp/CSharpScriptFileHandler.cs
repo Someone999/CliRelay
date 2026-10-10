@@ -199,7 +199,6 @@ public class CSharpScriptFileHandler : ICliHandler
     
     private static Assembly? CompileScript(List<SyntaxTree> syntaxTrees, HashSet<MetadataReference> references)
     {
-        if (syntaxTrees == null) throw new ArgumentNullException(nameof(syntaxTrees));
         if (syntaxTrees.Count == 0)
         {
             return null;
