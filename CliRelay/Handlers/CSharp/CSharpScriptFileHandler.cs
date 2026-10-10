@@ -78,60 +78,7 @@ public class CSharpScriptFileHandler : ICliHandler
             ? throw new AmbiguousMatchException("More than one types marked as CliScriptAttribute")
             : matchedTypes[0];
     }
-
-    private Assembly? BuildAssembly(CliHandleContext context)
-    {
-        var data = context.Data;
-        if (data is null)
-        {
-            throw new InvalidDataException($"Handler {nameof(CSharpScriptFileHandler)} received a null payload)");
-        }
-
-        var files = data["files"]?.AsArray();
-        if (files is null)
-        {
-            throw new InvalidDataException(
-                $"data.files must be specified for handler {nameof(CSharpScriptFileHandler)}.");
-        }
-
-        List<SyntaxTree> syntaxTrees = new List<SyntaxTree>(files.Count);
-        foreach (var file in files)
-        {
-            if (file is not JsonValue val || !val.TryGetValue(out string? fileName))
-            {
-                continue;
-            }
-
-            var syntaxTree = CSharpSyntaxTree.ParseText(File.ReadAllText(fileName));
-            syntaxTrees.Add(syntaxTree);
-        }
-
-        var referenceArr = data["references"]?.AsArray();
-        if (referenceArr is null)
-        {
-            return CompileScript(syntaxTrees, []);
-        }
-
-        HashSet<MetadataReference> references = new HashSet<MetadataReference>(referenceArr.Count);
-        foreach (var reference in referenceArr)
-        {
-            if (reference is not JsonValue val || !val.TryGetValue(out string? referenceName))
-            {
-                continue;
-            }
-
-            if (!File.Exists(referenceName))
-            {
-                throw new FileNotFoundException("Reference file not found", referenceName);
-            }
-
-            references.Add(MetadataReference.CreateFromFile(referenceName));
-        }
-
-        return CompileScript(syntaxTrees, references);
-    }
-
-    private ReadOnlyCollection<ResolvedType> ScanMatchedTypes(Assembly assembly)
+    private static ReadOnlyCollection<ResolvedType> ScanMatchedTypes(Assembly assembly)
     {
         List<ResolvedType> resolvedTypes = new List<ResolvedType>();
         var types = assembly.GetTypes();
@@ -198,8 +145,61 @@ public class CSharpScriptFileHandler : ICliHandler
         }
     }
 
-    private Assembly? CompileScript(IList<SyntaxTree> syntaxTrees, HashSet<MetadataReference> references)
+    private static Assembly? BuildAssembly(CliHandleContext context)
     {
+        var data = context.Data;
+        if (data is null)
+        {
+            throw new InvalidDataException($"Handler {nameof(CSharpScriptFileHandler)} received a null payload)");
+        }
+
+        var files = data["files"]?.AsArray();
+        if (files is null)
+        {
+            throw new InvalidDataException(
+                $"data.files must be specified for handler {nameof(CSharpScriptFileHandler)}.");
+        }
+
+        List<SyntaxTree> syntaxTrees = new List<SyntaxTree>(files.Count);
+        foreach (var file in files)
+        {
+            if (file is not JsonValue val || !val.TryGetValue(out string? fileName))
+            {
+                continue;
+            }
+
+            var syntaxTree = CSharpSyntaxTree.ParseText(File.ReadAllText(fileName));
+            syntaxTrees.Add(syntaxTree);
+        }
+
+        var referenceArr = data["references"]?.AsArray();
+        if (referenceArr is null)
+        {
+            return CompileScript(syntaxTrees, []);
+        }
+
+        HashSet<MetadataReference> references = new HashSet<MetadataReference>(referenceArr.Count);
+        foreach (var reference in referenceArr)
+        {
+            if (reference is not JsonValue val || !val.TryGetValue(out string? referenceName))
+            {
+                continue;
+            }
+
+            if (!File.Exists(referenceName))
+            {
+                throw new FileNotFoundException("Reference file not found", referenceName);
+            }
+
+            references.Add(MetadataReference.CreateFromFile(referenceName));
+        }
+
+        return CompileScript(syntaxTrees, references);
+    }
+    
+    private static Assembly? CompileScript(List<SyntaxTree> syntaxTrees, HashSet<MetadataReference> references)
+    {
+        if (syntaxTrees == null) throw new ArgumentNullException(nameof(syntaxTrees));
         if (syntaxTrees.Count == 0)
         {
             return null;
@@ -224,7 +224,6 @@ public class CSharpScriptFileHandler : ICliHandler
 
         void AddSdkDlls(HashSet<MetadataReference> refs)
         {
-            
             refs.Add(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
             string runtimeDirectory = RuntimeEnvironment.GetRuntimeDirectory();
             string[] coreAssemblies =
